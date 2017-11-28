@@ -6,7 +6,9 @@ window.onload = function() {
     var ctx=c.getContext("2d");
     var ctxo=co.getContext("2d");
     var img= new Image();
-    img.src = "./pizza.png";
+    img.src = "./images/pizza_annotated_boundry.png";
+
+    
 
     wasmWorker.onmessage = function (e) {
         perfwasm1 = performance.now();
@@ -23,12 +25,18 @@ window.onload = function() {
         c.height = img.height
         co.height = img.height
         ctx.drawImage(img,0,0);
-        setTimeout(function() {
-            sendImageData()
-        }, 500)
+        fetch('images/pizza_RGB.json')
+        .then(function(response) {
+            return response.json()
+        })
+        .then(function(json) {
+            setTimeout(() => {
+                sendImageData(json)
+            }, 500)
+        })
     }
-    function sendImageData() {
-        let message = { cmd: 'imageNew', img: ctx.getImageData(0, 0, c.width, c.height)};
+    function sendImageData(json) {
+        let message = { cmd: 'imageNew', img: ctx.getImageData(0, 0, c.width, c.height), json: json};
         wasmWorker.postMessage(message);
     }    
 };

@@ -5,20 +5,38 @@ self.onmessage = function (e) {
         case 'imageNew':
         console.log('data', e.data)
         getContours(e.data.img, e.data.json);
-			break;
+            break;
+        case 'click':
+            console.log('datar', [e.data.coor.x, e.data.coor.y])
+            drawSegment([e.data.coor.x, e.data.coor.y])
+            break;
 	}
 }
 console.log('done loading worker')
 postMessage({msg: 'data'});
+let contours, hierarchy, dst, w, h;
+
+function drawSegment(point) {
+    for (let i = 0; i < contours.size(); ++i) {
+        let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
+            Math.round(Math.random() * 255), 255);
+        if (cv.pointPolygonTest(contours.get(i), point, false) == 1) {
+            console.log(cv.pointPolygonTest(contours.get(i), point, false) == 1)
+            cv.drawContours(dst, contours, i, color, cv.LineTypes.FILLED.value, cv.LineTypes.LINE_8.value, hierarchy, 100, [0,0]);
+        }
+    }
+    postMessage({msg: new ImageData(new Uint8ClampedArray(dst.data()), w, h)});
+}
 
 function getContours(imageData, json) {
     let tresh = 1;
     let max_tresh = 1;
-
+    w = imageData.width;
+    h = imageData.height;
     let img = cv.matFromArray(imageData, cv.CV_8UC4);
 
     
-    let dst = cv.Mat.zeros(img.cols, img.rows, cv.CV_8UC4);
+    dst = cv.Mat.zeros(img.cols, img.rows, cv.CV_8UC4);
 
     img.convertTo(dst, cv.CV_8U, 1, 0);
 
@@ -27,8 +45,8 @@ function getContours(imageData, json) {
 
     cv.threshold(img, img, tresh, max_tresh, cv.ThresholdTypes.THRESH_BINARY.value);
 
-    let contours = new cv.MatVector();
-    let hierarchy = new cv.Mat();
+    contours = new cv.MatVector();
+    hierarchy = new cv.Mat();
 
     cv.findContours(img, contours, hierarchy, cv.RetrievalModes.RETR_CCOMP.value, cv.ContourApproximationModes.CHAIN_APPROX_SIMPLE.value, [0,0])
 
@@ -39,14 +57,14 @@ function getContours(imageData, json) {
         let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),
             Math.round(Math.random() * 255), 255);
         console.log(cv.pointPolygonTest(contours.get(i), [251, 251], false) == 1)
-        if (cv.pointPolygonTest(contours.get(i), [250, 250], false) == 1) {
+        if (cv.pointPolygonTest(contours.get(i), [252, 165], false) == 1) {
             console.log(contours.get(i))
             cv.drawContours(dst, contours, i, color, cv.LineTypes.FILLED.value, cv.LineTypes.LINE_8.value, hierarchy, 100, [0,0]);
         }
     }
     
     postMessage({msg: new ImageData(new Uint8ClampedArray(dst.data()), imageData.width, imageData.height)});
-    img.delete(); dst.delete();contours.delete(); hierarchy.delete();
+    img.delete();
 }
 
 function setGrid(imageData, json) {

@@ -7,7 +7,9 @@ window.onload = function() {
     var ctxo=co.getContext("2d");
     var img= new Image();
     img.src = "./images/pizza_annotated_boundry.png";
-
+    co.onclick = e => {
+        wasmWorker.postMessage({cmd: 'click', coor: {x: e.offsetX, y: e.offsetY}});
+    }
     
 
     wasmWorker.onmessage = function (e) {
